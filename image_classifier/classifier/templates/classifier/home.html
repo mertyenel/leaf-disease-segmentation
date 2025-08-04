@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meyve Yapraklarında Hastalık Tespiti</title>
+    <link rel="icon" href="{% static 'classifier/fav_icon/leaf.png' %}" type="image/png">
+    <style>
+        /* Genel Stil Ayarları */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body,
+        html {
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            /* Sayfa kaydırmasını engelle */
+        }
+
+        /* Video Arka Plan */
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+            filter: brightness(1.2) blur(3px);
+            /* Parlaklık artırıldı ve 5px bulanıklık eklendi */
+        }
+
+        /* Overlay Katmanı */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            /* Koyu yarı saydam katman */
+            z-index: 0;
+        }
+
+        /* Ana Konteyner */
+        .content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 1;
+            color: #fff;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Başlık */
+
+        .content h1 {
+            font-size: 40px;
+            display: block;
+            /* Tam genişlikte olmasını sağlar */
+            width: 100%;
+            /* Mevcut kapsayıcı kadar genişler */
+            text-align: center;
+            /* Ortalanmış halde kalır */
+            color: #d30000;
+            margin-bottom: 20px;
+
+        }
+
+        /* Butonlar */
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .btn {
+            background-color: #d30000;
+            color: #fff;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            width: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+
+        .btn:hover {
+            background-color: #d30000;
+            transform: translateY(-3px);
+        }
+
+        /* İkonlar */
+        .btn i {
+            font-size: 1.2rem;
+        }
+
+        /* Gizli Dosya Seçici */
+        .hidden-file-input {
+            display: none;
+        }
+
+        /* Footer */
+        footer {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            color: #bbb;
+            font-size: 0.8rem;
+            z-index: 1;
+        }
+
+        footer a {
+            color: #d30000;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Duyarlı Tasarım */
+        @media (max-width: 600px) {
+            .content h1 {
+                font-size: 2.5rem;
+            }
+
+            .btn {
+                width: 200px;
+                padding: 12px 25px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+    <!-- Font Awesome İkonları İçin -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        integrity="sha512-Fo3rlrQkTy0tTW96a6sNHv5eVZ0p+3Hwfg4x3cjtTOuw/ABf6IcVvfnCtGmOW5LlXQb14Z5mbbQ2zEXx1l/K5Q=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+
+<body>
+    <!-- Video Arka Plan -->
+    <video autoplay muted loop class="video-background">
+        <source src="{% static 'classifier/videos/background.mp4' %}" type="video/mp4">
+        Tarayıcınız video etiketini desteklemiyor.
+    </video>
+
+    <!-- Overlay Katmanı -->
+    <div class="overlay"></div>
+
+    <!-- Ana İçerik -->
+    <div class="content">
+        <h1>☘️ Meyve Yapraklarında Hastalık Tespiti</h1>
+        <div class="button-container">
+            <!-- Manuel Görüntü Yükleme Butonu -->
+            <form id="upload-form" action="{% url 'classify_image' %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <label for="image-upload" class="btn">
+                    <i class="fas fa-upload"></i> Görüntü Yükle
+                </label>
+                <input type="file" id="image-upload" name="image" accept="image/*" class="hidden-file-input" required>
+
+                <!-- Özelleştirilmiş uyarı mesajı -->
+
+            </form>
+
+            <!-- Rastgele Görüntü Sınıflandırma Butonu -->
+            <form action="{% url 'random_classify_image' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn">
+                    <i class="fas fa-random"></i> Rastgele Görüntü
+                </button>
+            </form>
+
+            <div id="custom-alert" style="display: none; color: white; font-weight: bold;">
+                Lütfen geçerli bir resim dosyası yükleyin!
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 Meyve Yapraklarında Hastalık Tespiti</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        document.getElementById('image-upload').addEventListener('change', function () {
+            var file = this.files[0];
+            var fileType = file.type;
+
+            // Uyarıyı gizle
+            var alertDiv = document.getElementById('custom-alert');
+            alertDiv.style.display = 'none';
+
+            // Yalnızca resim dosyalarına izin ver
+            if (!fileType.startsWith('image/')) {
+                // Hata mesajını göster
+                alertDiv.style.display = 'block';
+                // Formu sıfırla
+                document.getElementById('upload-form').reset();
+            } else {
+                // Eğer geçerli dosya ise, formu otomatik gönder
+                document.getElementById('upload-form').submit();
+            }
+        });
+
+    </script>
+</body>
+
+</html>

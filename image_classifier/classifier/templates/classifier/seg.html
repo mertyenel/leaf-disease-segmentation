@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segmentasyon Sonuçları</title>
+    <link rel="icon" href="{% static 'classifier/fav_icon/leaf.png' %}" type="image/png">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+            filter: brightness(1.1);
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            z-index: 0;
+        }
+
+        .content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 1;
+            color: #fff;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+
+        .content h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #d30000;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+        }
+
+        .images-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .images-row div {
+            flex: 1 1 23%;
+            text-align: center;
+            min-width: 250px;
+            background: transparent;
+            border-radius: 10px;
+        }
+
+        .images-row h4 {
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .image-container {
+            position: relative;
+            width: 100%;
+            height: auto;
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            border: 1px solid gray;
+        }
+
+        .images-row img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.3s ease;
+            transform-origin: 50% 50%; /* Default center */
+        }
+
+        .image-container:hover img {
+            transform: scale(1.7);
+        }
+
+        .stats-container {
+            padding: 12px;
+            background: transparent;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stats-container h3 {
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .stats-container p {
+            color: #fff;
+            margin: 5px 0;
+            font-size: 1.1rem;
+            display: inline-block;
+        }
+
+        .stats-container .pixel-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 10px;
+        }
+
+        .disease-percentage {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #d30000;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .btn-back {
+            background-color: #d30000;
+            color: #fff;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 15px;
+        }
+
+        .btn-back:hover {
+            background-color: #e03d00;
+            transform: translateY(-2px);
+        }
+
+        footer {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            color: #bbb;
+            font-size: 0.8rem;
+            z-index: 1;
+        }
+
+        @media (max-width: 1200px) {
+            .images-row div {
+                flex: 1 1 45%;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .content h1 {
+                font-size: 2rem;
+            }
+            .images-row div {
+                flex: 1 1 100%;
+            }
+            .btn-back {
+                padding: 12px 25px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <video autoplay muted loop class="video-background">
+        <source src="{% static 'classifier/videos/background.mp4' %}" type="video/mp4">
+        Tarayıcınız video etiketini desteklemiyor.
+    </video>
+
+    <div class="overlay"></div>
+
+    <div class="content">
+        <h1>Segmentasyon Sonuçları</h1>
+        <div class="images-row">
+            <div>
+                <h4>Orijinal Görüntü</h4>
+                <div class="image-container">
+                    <img src="{{ original_image }}" alt="Orijinal Görüntü">
+                </div>
+            </div>
+            <div>
+                <h4>Yaprağın Tamamı</h4>
+                <div class="image-container">
+                    <img src="{{ leaf_mask }}" alt="Yaprak Segmentasyonu">
+                </div>
+            </div>
+            <div>
+                <h4>Hastalık Segmentasyonu</h4>
+                <div class="image-container">
+                    <img src="{{ disease_mask }}" alt="Hastalık Segmentasyonu">
+                </div>
+            </div>
+            <div>
+                <h4>Örtülenmiş Yaprak</h4>
+                <div class="image-container">
+                    <img src="{{ overlay_image }}" alt="Hastalık Overlay">
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-container">
+            <h3>Hastalık Analizi</h3>
+            <div class="pixel-stats">
+                <p>Yaprak Piksel Sayısı: {{ leaf_pixels|floatformat:0 }}</p>
+                <p>Hastalık Piksel Sayısı: {{ disease_pixels|floatformat:0 }}</p>
+            </div>
+            <p class="disease-percentage">Hastalık Oranı: %{{ disease_percentage|floatformat:2 }}</p>
+        </div>
+
+        <a href="{% url 'home' %}" class="btn-back">Yeni Görüntü Sınıflandır</a>
+    </div>
+
+    <footer>
+        <p>© 2025 Meyve Yapraklarında Hastalık Tespiti</p>
+    </footer>
+
+    <script>
+        // Select all image containers
+        const imageContainers = document.querySelectorAll('.image-container');
+
+        imageContainers.forEach(container => {
+            const img = container.querySelector('img');
+
+            // Update transform-origin on mousemove
+            container.addEventListener('mousemove', (e) => {
+                const rect = img.getBoundingClientRect();
+                const x = e.clientX - rect.left; // Mouse X relative to image
+                const y = e.clientY - rect.top;  // Mouse Y relative to image
+                const xPercent = (x / rect.width) * 100;
+                const yPercent = (y / rect.height) * 100;
+                img.style.transformOrigin = `${xPercent}% ${yPercent}%`;
+            });
+
+            // Reset transform-origin when mouse leaves
+            container.addEventListener('mouseleave', () => {
+                img.style.transformOrigin = '50% 50%'; // Reset to center
+            });
+        });
+    </script>
+</body>
+</html>
